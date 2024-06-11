@@ -17,13 +17,28 @@ export default class CustomModal extends Component {
         super(props);
         this.state = {
             formData: {
-                title: props.events ? props.events.event : "",
-                startDate: props.events ? props.events.start_date : "",
-                endDate: props.events ? props.events.end_date : "",
+                event: props.events ? props.events.event : "",
+                start_date: props.events ? props.events.start_date : "",
+                end_date: props.events ? props.events.end_date : "",
                 ongoing: props.events ? props.events.ongoing : true,
             }
         };
     }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.events !== prevProps.events) {
+            this.setState({
+                formData: {
+                    event_id: this.props.events ? this.props.events.id : "",
+                    event: this.props.events ? this.props.events.event : "",
+                    start_date: this.props.events ? this.props.events.start_date : "",
+                    end_date: this.props.events ? this.props.events.end_date : "",
+                    ongoing: this.props.events ? this.props.events.ongoing : true,
+                }
+            });
+        }
+    }
+
 
     handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -35,45 +50,50 @@ export default class CustomModal extends Component {
         }));
     }
 
+    handleSave = () => {
+        const { formData } = this.state;
+        this.props.onSave(formData);
+    }
+
     render() {
-        const { isOpen, toggle, onSave } = this.props;
+        const { isOpen, toggle } = this.props;
         const { formData } = this.state;
 
         return (
             <Modal isOpen={isOpen} toggle={toggle}>
-                <ModalHeader toggle={toggle}>Add New Event</ModalHeader>
+                <ModalHeader toggle={toggle}>{this.props.events ? "Edit Event" : "Add New Event"}</ModalHeader>
                 <ModalBody>
                     <Form>
                         <FormGroup>
-                            <Label for="event-title">Title</Label>
+                            <Label for="event">Title</Label>
                             <Input
                                 type="text"
-                                id="event-title"
-                                name="title"
-                                value={formData.title}
+                                id="event"
+                                name="event"
+                                value={formData.event}
                                 onChange={this.handleChange}
                                 placeholder="Enter Event Title"
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label for="event-start-date">Start Date</Label>
+                            <Label for="start_date">Start Date</Label>
                             <Input
                                 type="date"
-                                id="event-start-date"
-                                name="startDate"
-                                value={formData.startDate}
+                                id="start_date"
+                                name="start_date"
+                                value={formData.start_date}
                                 onChange={this.handleChange}
                                 placeholder="Enter Start Date"
                             />
                         </FormGroup>
                         {!formData.ongoing && (
                             <FormGroup>
-                                <Label for="event-end-date">End Date</Label>
+                                <Label for="end_date">End Date</Label>
                                 <Input
                                     type="date"
-                                    id="event-end-date"
-                                    name="endDate"
-                                    value={formData.endDate}
+                                    id="end_date"
+                                    name="end_date"
+                                    value={formData.end_date}
                                     onChange={this.handleChange}
                                     placeholder="Enter End Date"
                                 />
@@ -95,7 +115,7 @@ export default class CustomModal extends Component {
                 <ModalFooter>
                     <Button
                         className="btn btn-success"
-                        onClick={() => onSave(this.state.formData)}
+                        onClick={this.handleSave}
                     >
                         Save
                     </Button>

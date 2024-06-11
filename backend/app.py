@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mongo_db import get_event_docs, insert_event_doc, update_event_docs, delete_event_docs
+from pydantic import BaseModel
 
 
 app = FastAPI()
-origins = ["http://localhost:3000", "http://192.168.0.87:3000"]
+origins = ["http://localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,28 +16,42 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def root():
+class Event(BaseModel):
+    event: str
+    start_date: str
+    end_date: str = None
+    ongoing: bool
+
+
+def convert_mongo_documents(doc):
     return {
-        "data": [
-            {
-                "event": "Nathaniel Birthday",
-                "start_date": "2024-05-27",
-                "end_date": "",
-                "on-going": True,
-            },
-            {
-                "event": "Ellysia Birthday",
-                "start_date": "1995-08-23",
-                "end_date": "",
-                "on-going": True,
-            },
-        ]
+        "id": str(doc["_id"]),
+        "event": doc["event"],
+        "start_date": doc["start_date"],
+        "end_date": doc.get("end_date", ""),
+        "ongoing": doc["ongoing"],
     }
 
-@app.post("/api/newevent")
-async def new_event():
-    return {
-        "status": 200,
-        "message": "OK"
-    }
+
+@app.get("/")
+async def root():
+    events_docs = get_event_docs()
+    events = list(map(convert_mongo_documents, events_docs))
+    return {"data": events}
+
+
+@app.post("/newevent")
+async def new_event(event: Event):
+    insert_event_doc(event.model_dump())
+    return {"status": 200, "message": "OK"}
+
+
+@app.put("/newevent/{event_id}")
+async def update_event(event_id: str, event: Event):
+    update_event_docs(event_id, event.model_dump())
+    return {"status": 200, "message": "OK"}
+
+@app.delete("/deleteevent/{event_id}")
+async def delete_event(event_id: str):
+    delete_event_docs(event_id)
+    return {"status": 200, "message": "OK"}
