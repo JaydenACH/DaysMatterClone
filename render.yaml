@@ -1,9 +1,6 @@
 services:
   - type: web
     name: backend
-    env:
-      - key: MONGO_PWD
-        value: m2rWu4tNa5fEX5oY
     repo: https://github.com/JaydenACH/DaysMatterClone/backend
     buildCommand: docker build -t backend ./backend
     startCommand: uvicorn app.app:app --proxy-headers --host 0.0.0.0 --port 8000
