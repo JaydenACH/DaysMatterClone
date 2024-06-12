@@ -1,5 +1,0 @@
-done - create a nosql db, use mongodb
-done - query the db for get request
-done - update post request endpoint with nosql
-- add image
-- add toggle to switch between different display options for the days counted

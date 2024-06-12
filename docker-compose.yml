@@ -1,0 +1,18 @@
+services:
+
+  backend:
+    build: ./backend
+    command: uvicorn app.app:app --proxy-headers --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/code
+    environment:
+      - MONGO_PWD=m2rWu4tNa5fEX5oY
+
+  frontend:
+    build: ./frontend/days-matter
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
