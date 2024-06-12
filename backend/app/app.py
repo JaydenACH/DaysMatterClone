@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from mongo_db import (
+from .mongo_db import (
     get_event_docs,
     insert_event_doc,
     update_event_docs,
