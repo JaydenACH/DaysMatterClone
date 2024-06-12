@@ -15,7 +15,8 @@ class App extends Component {
   }
 
   componentDidMount() {
-    axios.get('http://127.0.0.1:8000')
+    const apiUrl = process.env.REACT_APP_API_URL;
+    axios.get(apiUrl)
       .then(response => {
         this.setState({ events: response.data.data })
       })
@@ -44,9 +45,10 @@ class App extends Component {
   }
 
   addNewEvent = (newEvent) => {
+    const apiUrl = process.env.REACT_APP_API_URL;
     if (newEvent.event_id) {
       axios
-        .put(`http://127.0.0.1:8000/newevent/${newEvent.event_id}/`, newEvent)
+        .put(`${apiUrl}newevent/${newEvent.event_id}/`, newEvent)
         .then(response => {
           this.toggleModal();
           this.componentDidMount();
@@ -57,7 +59,7 @@ class App extends Component {
       return;
     }
     axios
-      .post('http://127.0.0.1:8000/newevent', newEvent)
+      .post(`${apiUrl}newevent`, newEvent)
       .then(response => {
         this.toggleModal();
         this.componentDidMount();
@@ -68,8 +70,9 @@ class App extends Component {
   }
 
   handleDelete = (event) => {
+    const apiUrl = process.env.REACT_APP_API_URL;
     axios
-      .delete(`http://127.0.0.1:8000/deleteevent/${event.id}/`)
+      .delete(`${apiUrl}deleteevent/${event.id}/`)
       .then(response => {
         this.componentDidMount();
       })

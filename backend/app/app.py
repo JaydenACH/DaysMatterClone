@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .mongo_db import get_event_docs, insert_event_doc, update_event_docs, delete_event_docs
+from mongo_db import (
+    get_event_docs,
+    insert_event_doc,
+    update_event_docs,
+    delete_event_docs,
+)
 from pydantic import BaseModel
 
 
 app = FastAPI()
-origins = ["http://localhost:3000"]
+origins = ["http://localhost:3000", "https://daysmatterclone.onrender.com/"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,6 +55,7 @@ async def new_event(event: Event):
 async def update_event(event_id: str, event: Event):
     update_event_docs(event_id, event.model_dump())
     return {"status": 200, "message": "OK"}
+
 
 @app.delete("/deleteevent/{event_id}")
 async def delete_event(event_id: str):
