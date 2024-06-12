@@ -28,6 +28,3 @@ services:
         value: http://localhost:8000 # Assuming the frontend needs to know the backend URL
       - key: PORT
         value: 3000
-    scaling:
-      minInstances: 1
-      maxInstances: 3
