@@ -15,30 +15,34 @@ import {
 export default class CustomModal extends Component {
     constructor(props) {
         super(props);
+        const events = props.events || {};
         this.state = {
             formData: {
-                event: props.events ? props.events.event : "",
-                start_date: props.events ? props.events.start_date : "",
-                end_date: props.events ? props.events.end_date : "",
-                ongoing: props.events ? props.events.ongoing : true,
+                event_id: events.event_id || "",
+                event: events.event || "",
+                start_date: events.start_date || "",
+                end_date: events.end_date || "",
+                ongoing: events.ongoing !== undefined ? events.ongoing : true,
+                pin_on_top: events.pin_on_top || false,
             }
         };
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.events !== prevProps.events) {
+        const { events = {} } = this.props;
+        if (events && events !== prevProps.events) {
             this.setState({
                 formData: {
-                    event_id: this.props.events ? this.props.events.id : "",
-                    event: this.props.events ? this.props.events.event : "",
-                    start_date: this.props.events ? this.props.events.start_date : "",
-                    end_date: this.props.events ? this.props.events.end_date : "",
-                    ongoing: this.props.events ? this.props.events.ongoing : true,
+                    event_id: events.event_id || "",
+                    event: events.event || "",
+                    start_date: events.start_date || "",
+                    end_date: events.end_date || "",
+                    ongoing: events.ongoing !== undefined ? events.ongoing : true,
+                    pin_on_top: events.pin_on_top || false,
                 }
             });
         }
     }
-
 
     handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -53,6 +57,10 @@ export default class CustomModal extends Component {
     handleSave = () => {
         const { formData } = this.state;
         this.props.onSave(formData);
+    }
+
+    handleDelete = () => {
+        this.props.onDelete(this.props.events);
     }
 
     render() {
@@ -113,6 +121,14 @@ export default class CustomModal extends Component {
                     </Form>
                 </ModalBody>
                 <ModalFooter>
+                    {this.props.events && (
+                        <Button
+                            className="btn btn-danger"
+                            onClick={this.handleDelete}
+                        >
+                            Delete
+                        </Button>
+                    )}
                     <Button
                         className="btn btn-success"
                         onClick={this.handleSave}

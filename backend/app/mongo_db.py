@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING, ASCENDING
 from dotenv import load_dotenv, find_dotenv
 import os
 from bson.objectid import ObjectId
@@ -15,28 +15,42 @@ client = MongoClient(connection_string)
 
 dbs = client.list_database_names()
 daysmatter_db = client.daysmatter_db
-collections = daysmatter_db.list_collection_names()
+collection = daysmatter_db.daysmatter
 
 
 def insert_event_doc(data) -> bool:
-    collection = daysmatter_db.daysmatter
     collection.insert_one(data).inserted_id
     return True
 
 
 def get_event_docs() -> list:
-    collection = daysmatter_db.daysmatter
-    events = collection.find()
+    events = collection.find().sort(
+        [
+            ("ongoing", DESCENDING),
+            ("pin_on_top", DESCENDING),
+            ("start_date", DESCENDING),
+        ]
+    )
     return list(events)
 
 
 def update_event_docs(event_id: str, updated_event: dict):
-    collection = daysmatter_db.daysmatter
     _id = ObjectId(event_id)
     collection.update_one({"_id": _id}, {"$set": updated_event})
 
 
 def delete_event_docs(event_id: str):
-    collection = daysmatter_db.daysmatter
     _id = ObjectId(event_id)
     collection.delete_one({"_id": _id})
+
+
+def pin_event_doc(event_id: str):
+    _id = ObjectId(event_id)
+    event = collection.find_one({"_id": _id})
+    if not event.get("pin_on_top"):
+        collection.update_one({"_id": _id}, {"$set": {"pin_on_top": True}})
+        collection.update_many(
+            {"pin_on_top": True, "_id": {"$ne": _id}}, {"$set": {"pin_on_top": False}}
+        )
+    else:
+        collection.update_many({"pin_on_top": True}, {"$set": {"pin_on_top": False}})

@@ -2,6 +2,9 @@ import React, { Component } from 'react'
 import './App.css'
 import axios from 'axios'
 import CustomModal from './components/modals'
+import { LuPin } from "react-icons/lu";
+import { MdPushPin } from "react-icons/md";
+import { FaRegSquarePlus } from "react-icons/fa6";
 
 
 class App extends Component {
@@ -11,6 +14,7 @@ class App extends Component {
       events: [],
       modalIsOpen: false,
       currentEvent: null,
+      viewType: 'list',
     }
   }
 
@@ -25,10 +29,10 @@ class App extends Component {
       })
   }
 
-  toggleModal = () => {
+  toggleModal = (currentEvent = null) => {
     this.setState(prevState => ({
       modalIsOpen: !prevState.modalIsOpen,
-      currentEvent: null
+      currentEvent
     }))
   }
 
@@ -44,11 +48,14 @@ class App extends Component {
     return countDays + " days";
   }
 
-  addNewEvent = (newEvent) => {
+  addNewEvent = (newEvent = {}) => {
     const apiUrl = process.env.REACT_APP_API_URL;
+    if (newEvent.ongoing) {
+      newEvent.end_date = "";
+    }
     if (newEvent.event_id) {
       axios
-        .put(`${apiUrl}newevent/${newEvent.event_id}/`, newEvent)
+        .put(`${apiUrl}newevent/${newEvent.event_id}`, newEvent)
         .then(response => {
           this.toggleModal();
           this.componentDidMount();
@@ -65,15 +72,16 @@ class App extends Component {
         this.componentDidMount();
       })
       .catch(error => {
-        console.error('Error saving data: ', error)
+        alert('Error saving data: ', error)
       });
   }
 
-  handleDelete = (event) => {
+  handleDelete = (event = {}) => {
     const apiUrl = process.env.REACT_APP_API_URL;
     axios
-      .delete(`${apiUrl}deleteevent/${event.id}/`)
+      .delete(`${apiUrl}deleteevent/${event.id}`)
       .then(response => {
+        this.toggleModal();
         this.componentDidMount();
       })
       .catch(error => {
@@ -81,51 +89,88 @@ class App extends Component {
       })
   }
 
-  handleEdit = (event) => {
+  handleEdit = (event = null) => {
     this.setState({
       currentEvent: event,
       modalIsOpen: true
     });
   }
 
+  handlePin = (event = {}) => {
+    const apiUrl = process.env.REACT_APP_API_URL;
+    axios
+      .put(`${apiUrl}pinevent/${event.id}`)
+      .then(response => {
+        this.componentDidMount();
+      })
+      .catch(error => {
+        alert("Failed to pin this event", error)
+      })
+  }
+
+  handleViewChange = (e) => {
+    this.setState({ viewType: e.target.value });
+  }
+
   render() {
-    const { events, modalIsOpen, currentEvent } = this.state;
+    const { events, modalIsOpen, currentEvent, viewType } = this.state;
 
     return (
       <div id="main" className='container-fluid p-3'>
-        <div className='d-grid gap-2 col-6 mx-auto mb-3'>
-          <button type="button" className='btn btn-primary' onClick={() => this.toggleModal()}>
-            Add
-          </button>
+        <div className='row'>
+          <div className='d-grid col-2 me-auto mb-2'>
+            <button type="button" className='btn btn-primary' onClick={() => this.toggleModal()}>
+              <FaRegSquarePlus /> Add
+            </button>
+          </div>
+          <div className='d-grid gap-3 col-2 ms-auto mb-2'>
+            <select name="event_view" id="event_view" className='form-select' value={viewType} onChange={this.handleViewChange}>
+              <option value="div">ThumbNail</option>
+              <option value="list">List</option>
+            </select>
+          </div>
         </div>
         <div className='row'>
           {events && events.length > 0 ? (
-            events.map((event, index) => (
-              <div key={index} className="col-md-6 mb-3">
-                <div className="border rounded-5 shadow p-4">
-                  <h3 className='text-center'>{event.event} {event.ongoing ? "" : "// Ended //"}</h3>
-                  <div className='row text-center'>
-                    <div className='col pt-3'>
-                      <p>Start Date: {event.start_date}</p>
+            viewType === 'div' ? (
+              events.map((event, index) => (
+                <div key={index} className="col-md-6 mb-3" onClick={() => this.handleEdit(event)}>
+                  <div className="border rounded-5 shadow p-4" style={{ cursor: 'pointer' }}>
+                    <h3 className='text-center'>{event.ongoing ? "" : <button className='btn btn-secondary btn-sm' disabled>Ended</button>} {event.event}
+                      <button className='btn' onClick={(e) => { e.stopPropagation(); this.handlePin(event) }}>
+                        {event.pin_on_top ? <MdPushPin /> : <LuPin />}
+                      </button>
+                    </h3>
+                    <div className='row text-center'>
+                      <div className='col pt-3'>
+                        <p>Start Date: {event.start_date}</p>
+                      </div>
+                      <div className='col pt-3'>
+                        <p>End Date: {event.end_date ? event.end_date : 'Ongoing'}</p>
+                      </div>
                     </div>
-                    <div className='col pt-3'>
-                      <p>End Date: {event.end_date ? event.end_date : 'Ongoing'}</p>
+                    <div className='pt-3'>
+                      <p className='text-center fw-bold'>Count Days: {this.calculateCountDays(event.start_date, event.end_date, event['ongoing'])}</p>
                     </div>
-                  </div>
-                  <div className='pt-3'>
-                    <p className='text-center fw-bold'>Count Days: {this.calculateCountDays(event.start_date, event.end_date, event['ongoing'])}</p>
-                  </div>
-                  <div className='pt-1'>
-                    <button type='button' className='btn btn-warning m-2' onClick={() => this.handleEdit(event)}>
-                      Edit
-                    </button>
-                    <button type='button' className='btn btn-danger' onClick={() => this.handleDelete(event)}>
-                      Delete
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))
+              ))
+            ) : (
+              <ul className='list-group pr-0'>
+                {events.map((event, index) => (
+                  <li key={index} className='list-group-item d-flex justify-content-between align-items-center' onClick={() => this.handleEdit(event)} style={{ cursor: 'pointer' }}>
+                    <div className='d-flex flex-column'>
+                      <h3 className='mb-0'>{event.ongoing ? "" : <button className='btn btn-secondary btn-sm' disabled>Ended</button>} {event.event}
+                        <button className='btn' onClick={(e) => { e.stopPropagation(); this.handlePin(event) }}>
+                          {event.pin_on_top ? <MdPushPin /> : <LuPin />}
+                        </button>
+                      </h3>
+                    </div>
+                    <p className='fw-bold mb-0'>Count Days: {this.calculateCountDays(event.start_date, event.end_date, event['ongoing'])}</p>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : (
             <p>Loading events</p>
           )}
@@ -133,6 +178,7 @@ class App extends Component {
             isOpen={modalIsOpen}
             toggle={this.toggleModal}
             onSave={this.addNewEvent}
+            onDelete={this.handleDelete}
             events={currentEvent}
           />
         </div>
