@@ -5,9 +5,7 @@ from bson.objectid import ObjectId
 
 
 load_dotenv(find_dotenv())
-
 password = os.environ.get("MONGO_PWD")
-
 connection_string = (
     f"mongodb+srv://angchunhang:{password}@daysmatter.gzrfyzd.mongodb.net/"
 )

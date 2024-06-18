@@ -10,11 +10,13 @@ import { FaRegSquarePlus } from "react-icons/fa6";
 class App extends Component {
   constructor(props) {
     super(props)
+    const savedViewType = localStorage.getItem('viewType') || 'div';
     this.state = {
       events: [],
       modalIsOpen: false,
       currentEvent: null,
-      viewType: 'list',
+      viewType: savedViewType,
+      eventViewTypes: {},
     }
   }
 
@@ -22,7 +24,12 @@ class App extends Component {
     const apiUrl = process.env.REACT_APP_API_URL;
     axios.get(apiUrl)
       .then(response => {
-        this.setState({ events: response.data.data })
+        const events = response.data.data;
+        const eventViewTypes = events.reduce((acc, evt) => {
+          acc[evt.event_id] = 0;
+          return acc;
+        }, {});
+        this.setState({ events, eventViewTypes });
       })
       .catch(error => {
         console.error('There was an error making the request!', error)
@@ -34,18 +41,6 @@ class App extends Component {
       modalIsOpen: !prevState.modalIsOpen,
       currentEvent
     }))
-  }
-
-  calculateCountDays(start_date, end_date, on_going) {
-    if (on_going) {
-      end_date = new Date().toISOString().split('T')[0];
-    }
-
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-    const timeDifference = Math.abs(endDate.getTime() - startDate.getTime());
-    const countDays = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    return countDays + " days";
   }
 
   addNewEvent = (newEvent = {}) => {
@@ -99,7 +94,7 @@ class App extends Component {
   handlePin = (event = {}) => {
     const apiUrl = process.env.REACT_APP_API_URL;
     axios
-      .put(`${apiUrl}pinevent/${event.id}`)
+      .put(`${apiUrl}pinevent/${event.event_id}`)
       .then(response => {
         this.componentDidMount();
       })
@@ -109,11 +104,32 @@ class App extends Component {
   }
 
   handleViewChange = (e) => {
-    this.setState({ viewType: e.target.value });
+    const viewType = e.target.value;
+    this.setState({ viewType: viewType });
+    localStorage.setItem('viewType', viewType);
+  }
+
+  toggleEventView = (event_id) => {
+    this.setState(prevState => {
+      const find_event = prevState.events.find(event => event.event_id === event_id);
+      if (find_event && find_event.days_diff) {
+        const list_length = find_event.days_diff.length;
+        const newViewType = (prevState.eventViewTypes[event_id] + 1) % list_length;
+        return {
+          eventViewTypes: {
+            ...prevState.eventViewTypes,
+            [event_id]: newViewType
+          }
+        };
+      } else {
+        console.error(`Event with ID ${event_id} not found or days_diff is undefined`);
+        return null;
+      }
+    });
   }
 
   render() {
-    const { events, modalIsOpen, currentEvent, viewType } = this.state;
+    const { events, modalIsOpen, currentEvent, viewType, eventViewTypes } = this.state;
 
     return (
       <div id="main" className='container-fluid p-3'>
@@ -149,8 +165,12 @@ class App extends Component {
                         <p>End Date: {event.end_date ? event.end_date : 'Ongoing'}</p>
                       </div>
                     </div>
-                    <div className='pt-3'>
-                      <p className='text-center fw-bold'>Count Days: {this.calculateCountDays(event.start_date, event.end_date, event['ongoing'])}</p>
+                    <div className='pt-3 text-center'>
+                      <button className='btn btn-info btn-lg' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
+                        <p className='fw-bold m-1'>
+                          {event.days_diff[eventViewTypes[event.event_id]]}
+                        </p>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -166,7 +186,13 @@ class App extends Component {
                         </button>
                       </h3>
                     </div>
-                    <p className='fw-bold mb-0'>Count Days: {this.calculateCountDays(event.start_date, event.end_date, event['ongoing'])}</p>
+                    <div className='text-center'>
+                      <button className='btn btn-info btn-sm mb-2' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
+                        <p className='fw-bold m-1'>
+                          {event.days_diff[eventViewTypes[event.event_id]]}
+                        </p>
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>

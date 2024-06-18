@@ -1,31 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import os
-from dotenv import load_dotenv, find_dotenv
+from mongo_db import (
+    get_event_docs,
+    insert_event_doc,
+    update_event_docs,
+    delete_event_docs,
+    pin_event_doc,
+)
+from calculation import calculate_difference
+import json
 
-load_dotenv(find_dotenv())
-
-development = os.environ.get("Development")
-if development:
-    from mongo_db import (
-        get_event_docs,
-        insert_event_doc,
-        update_event_docs,
-        delete_event_docs,
-        pin_event_doc,
-    )
-else:
-    from .mongo_db import (
-        get_event_docs,
-        insert_event_doc,
-        update_event_docs,
-        delete_event_docs,
-        pin_event_doc,
-    )
 
 app = FastAPI()
-origins = ["http://localhost:3000", "https://daysmatterclone.onrender.com"]
+origins = ["http://localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +40,7 @@ def convert_mongo_documents(doc):
         "end_date": doc.get("end_date", ""),
         "ongoing": doc["ongoing"],
         "pin_on_top": doc.get("pin_on_top", ""),
+        "days_diff": doc.get("days_diff", {}),
     }
 
 
@@ -59,6 +48,10 @@ def convert_mongo_documents(doc):
 async def root():
     events_docs = get_event_docs()
     events = list(map(convert_mongo_documents, events_docs))
+    for event in events:
+        event["days_diff"] = calculate_difference(
+            event["start_date"], event["end_date"]
+        )
     return {"data": events}
 
 
@@ -84,5 +77,4 @@ async def pin_event(event_id:str):
     pin_event_doc(event_id)
     return {"status": 200, "message": "OK"}
 
-# TODO: Toggle the counted days in week.months.years
-# TODO: Add picture
+# TODO: add comments
