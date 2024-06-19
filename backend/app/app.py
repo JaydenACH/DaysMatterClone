@@ -9,12 +9,11 @@ from mongo_db import (
     pin_event_doc,
 )
 from calculation import calculate_difference
-import json
+import logging
 
 
 app = FastAPI()
 origins = ["http://localhost:3000"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -22,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Event(BaseModel):
@@ -43,6 +45,10 @@ def convert_mongo_documents(doc):
         "days_diff": doc.get("days_diff", {}),
     }
 
+# ___________________________
+#
+#         Endpoints
+# ___________________________
 
 @app.get("/")
 async def root():
@@ -52,29 +58,33 @@ async def root():
         event["days_diff"] = calculate_difference(
             event["start_date"], event["end_date"]
         )
+    logger.info(f"Get Response: get once from backend")
     return {"data": events}
 
 
 @app.post("/newevent")
 async def new_event(event: Event):
-    insert_event_doc(event.model_dump())
-    return {"status": 200, "message": "OK"}
+    result = insert_event_doc(event.model_dump())
+    logger.info(f"Insert Response: {result}")
+    return result
 
 
 @app.put("/newevent/{event_id}")
 async def update_event(event_id: str, event: Event):
-    update_event_docs(event_id, event.model_dump())
-    return {"status": 200, "message": "OK"}
+    result = update_event_docs(event_id, event.model_dump())
+    logger.info(f"Update Response: {result}")
+    return result
 
 
 @app.delete("/deleteevent/{event_id}")
 async def delete_event(event_id: str):
-    delete_event_docs(event_id)
-    return {"status": 200, "message": "OK"}
+    result = delete_event_docs(event_id)
+    logger.info(f"Delete Response: {result}")
+    return result
+
 
 @app.put("/pinevent/{event_id}")
-async def pin_event(event_id:str):
-    pin_event_doc(event_id)
-    return {"status": 200, "message": "OK"}
-
-# TODO: add comments
+async def pin_event(event_id: str):
+    result = pin_event_doc(event_id)
+    logger.info(f"Pin Response: {result}")
+    return result

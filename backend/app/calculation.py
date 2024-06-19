@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 
 
 def calculate_difference(start_date: str, end_date: str) -> dict:
-    # date formatting preparation
+    # datetime object preparation
     start = datetime.strptime(start_date, "%Y-%m-%d")
     if end_date:
         end = datetime.strptime(end_date, "%Y-%m-%d")
@@ -13,22 +13,35 @@ def calculate_difference(start_date: str, end_date: str) -> dict:
 
     # get the calculations
     date_diff = relativedelta(end, start)
-    ymwd_years = date_diff.years
-    ymwd_months = date_diff.months
-    ymwd_weeks = date_diff.days // 7
-    ymwd_days = date_diff.days % 7
+    dwmy_years = date_diff.years
+    dwmy_months = date_diff.months
+    dwmy_weeks = date_diff.days // 7
+    dwmy_days = date_diff.days % 7
 
     def add_label(value, singular, plural):
         return f"{value} {plural if value > 1 else singular}"
 
-    raw_data = [
-        [ymwd_years, ymwd_months, ymwd_weeks, ymwd_days],
-        [ymwd_years * 12 + ymwd_months, ymwd_weeks, ymwd_days],
-        [(ymwd_years * 12 + ymwd_months) * 4 + ymwd_weeks, ymwd_days],
+    # arrangements: [ dwmy, dwm, dw, d ]
+    data_without_label = [
+        [
+            dwmy_days,
+            dwmy_weeks,
+            dwmy_months,
+            dwmy_years,
+        ],
+        [
+            dwmy_days,
+            dwmy_weeks,
+            dwmy_months + dwmy_years * 12,
+        ],
+        [
+            dwmy_days,
+            dwmy_weeks + (dwmy_years * 12 + dwmy_months) * 4,
+        ],
         [days_delta.days],
     ]
 
-    constants = [
+    CONSTANTS = [
         ("day", "days"),
         ("week", "weeks"),
         ("month", "months"),
@@ -37,12 +50,14 @@ def calculate_difference(start_date: str, end_date: str) -> dict:
 
     days_formatting = []
 
-    for data in raw_data:
+    # add labels to values and join them in a string
+    for data in data_without_label:
         mod_value = []
-        for value, labels in zip(reversed(data), constants):
+        for value, labels in zip(data, CONSTANTS):
             if value:
                 mod_value.append(add_label(value, labels[0], labels[1]))
         done_value = ", ".join(reversed(mod_value))
         if done_value not in days_formatting:
             days_formatting.append(done_value)
+
     return list(reversed(days_formatting))

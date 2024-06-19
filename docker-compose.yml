@@ -8,7 +8,7 @@ services:
     volumes:
       - ./backend:/code
     environment:
-      - MONGO_PWD=m2rWu4tNa5fEX5oY
+      - MONGO_LINK = mongodb+srv://{username}:{password}@daysmatter.gzrfyzd.mongodb.net/
 
   frontend:
     build: ./frontend/days-matter

@@ -16,11 +16,13 @@ export default class CustomModal extends Component {
     constructor(props) {
         super(props);
         const events = props.events || {};
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
         this.state = {
             formData: {
                 event_id: events.event_id || "",
                 event: events.event || "",
-                start_date: events.start_date || "",
+                start_date: events.start_date || formattedDate,
                 end_date: events.end_date || "",
                 ongoing: events.ongoing !== undefined ? events.ongoing : true,
                 pin_on_top: events.pin_on_top || false,

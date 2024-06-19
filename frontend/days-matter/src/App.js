@@ -52,8 +52,12 @@ class App extends Component {
       axios
         .put(`${apiUrl}newevent/${newEvent.event_id}`, newEvent)
         .then(response => {
-          this.toggleModal();
-          this.componentDidMount();
+          if (response.data.status === 200) {
+            this.toggleModal();
+            this.componentDidMount();
+          } else {
+            alert(response.data.message)
+          };
         })
         .catch(error => {
           alert("Error editing the data", error)
@@ -63,8 +67,12 @@ class App extends Component {
     axios
       .post(`${apiUrl}newevent`, newEvent)
       .then(response => {
-        this.toggleModal();
-        this.componentDidMount();
+        if (response.data.status === 200) {
+          this.toggleModal();
+          this.componentDidMount();
+        } else {
+          alert(response.data.message)
+        }
       })
       .catch(error => {
         alert('Error saving data: ', error)
@@ -74,10 +82,14 @@ class App extends Component {
   handleDelete = (event = {}) => {
     const apiUrl = process.env.REACT_APP_API_URL;
     axios
-      .delete(`${apiUrl}deleteevent/${event.id}`)
+      .delete(`${apiUrl}deleteevent/${event.event_id}`)
       .then(response => {
-        this.toggleModal();
-        this.componentDidMount();
+        if (response.data.status === 200) {
+          this.toggleModal();
+          this.componentDidMount();
+        } else {
+          alert(response.data.message)
+        }
       })
       .catch(error => {
         alert("Failed to delete", error)
@@ -96,7 +108,11 @@ class App extends Component {
     axios
       .put(`${apiUrl}pinevent/${event.event_id}`)
       .then(response => {
-        this.componentDidMount();
+        if (response.data.status === 200) {
+          this.componentDidMount();
+        } else {
+          alert(response.data.message)
+        }
       })
       .catch(error => {
         alert("Failed to pin this event", error)
@@ -141,7 +157,7 @@ class App extends Component {
           </div>
           <div className='d-grid gap-3 col-2 ms-auto mb-2'>
             <select name="event_view" id="event_view" className='form-select' value={viewType} onChange={this.handleViewChange}>
-              <option value="div">ThumbNail</option>
+              <option value="div">Block</option>
               <option value="list">List</option>
             </select>
           </div>
@@ -166,7 +182,7 @@ class App extends Component {
                       </div>
                     </div>
                     <div className='pt-3 text-center'>
-                      <button className='btn btn-info btn-lg' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
+                      <button className='btn btn-outline-light btn-lg' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
                         <p className='fw-bold m-1'>
                           {event.days_diff[eventViewTypes[event.event_id]]}
                         </p>
@@ -187,7 +203,7 @@ class App extends Component {
                       </h3>
                     </div>
                     <div className='text-center'>
-                      <button className='btn btn-info btn-sm mb-2' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
+                      <button className='btn btn-outline-light btn-sm mb-2' onClick={(e) => { e.stopPropagation(); this.toggleEventView(event.event_id) }}>
                         <p className='fw-bold m-1'>
                           {event.days_diff[eventViewTypes[event.event_id]]}
                         </p>
